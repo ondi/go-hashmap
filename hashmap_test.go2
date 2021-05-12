@@ -1,0 +1,45 @@
+//
+//
+//
+
+package hashmap
+
+import (
+	"fmt"
+	"testing"
+	// "gotest.tools/assert"
+)
+
+func int_hash(a int) uint64 {
+	return uint64(a)
+}
+
+func equal(a int, b int) bool {
+	return a == b
+}
+
+func Test01(t *testing.T) {
+	h := New[int, string](int_hash, equal, 0, 0)
+
+	node, ok := h.Insert(1, func() string { return "lalala" })
+	fmt.Printf("INSERT: %v %v\n", node, ok)
+
+	node, ok = h.Insert(1, func() string { return "lalala" })
+	fmt.Printf("INSERT: %v %v\n", node, ok)
+
+	node, ok = h.Insert(2, func() string { return "bububu" })
+	fmt.Printf("INSERT: %v %v\n", node, ok)
+
+	fmt.Printf("REHASH1: %v\n", len(h.hash_table))
+	h.rehash(16 * 4 / 3)
+	fmt.Printf("REHASH2: %v\n", len(h.hash_table))
+
+	node, ok = h.Find(1)
+	fmt.Printf("FIND: %v %v\n", node, ok)
+
+	node, ok = h.Find(2)
+	fmt.Printf("FIND: %v %v\n", node, ok)
+
+	node, ok = h.Find(3)
+	fmt.Printf("FIND: %v %v\n", node, ok)
+}

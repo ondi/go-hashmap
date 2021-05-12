@@ -1,0 +1,83 @@
+//
+// go tool go2go test
+//
+
+package hashmap
+
+type H64[T any] func(T) uint64
+type Equal[T any] func(T, T) bool
+type Create[T any] func() T
+
+type Node_t[Key_t any, Value_t any] struct {
+	Key   Key_t
+	Value Value_t
+	id    uint64
+}
+
+type Hashmap_t[Key_t any, Value_t any] struct {
+	equal       Equal[Key_t]
+	hash_func   H64[Key_t]
+	hash_table  [][]*Node_t[Key_t, Value_t]
+	bucket_size int
+}
+
+func New[Key_t any, Value_t any](hash_func H64[Key_t], equal Equal[Key_t], table_size int, bucket_size int) (self *Hashmap_t[Key_t, Value_t]) {
+	if table_size < 16 {
+		table_size = 16
+	}
+	if bucket_size < 4 {
+		bucket_size = 4
+	}
+	self = &Hashmap_t[Key_t, Value_t]{
+		equal:       equal,
+		hash_func:   hash_func,
+		hash_table:  make([][]*Node_t[Key_t, Value_t], table_size),
+		bucket_size: bucket_size,
+	}
+	return
+}
+
+func (self *Hashmap_t[Key_t, Value_t]) rehash(new_len uint64) {
+	hash_table := make([][]*Node_t[Key_t, Value_t], new_len)
+	for _, bucket := range self.hash_table {
+		for _, node := range bucket {
+			ix := node.id % new_len
+			hash_table[ix] = append(hash_table[ix], node)
+		}
+	}
+	self.hash_table = hash_table
+}
+
+func (self *Hashmap_t[Key_t, Value_t]) Insert(key Key_t, value Create[Value_t]) (node *Node_t[Key_t, Value_t], ok bool) {
+	id := self.hash_func(key)
+	ix := id % uint64(len(self.hash_table))
+	for _, node = range self.hash_table[ix] {
+		if self.equal(node.Key, key) {
+			return
+		}
+	}
+	if len(self.hash_table[ix]) == self.bucket_size {
+		new_len := uint64(len(self.hash_table) * 4 / 3)
+		self.rehash(new_len)
+		ix = id % new_len
+	}
+	node = &Node_t[Key_t, Value_t]{
+		id:    id,
+		Key:   key,
+		Value: value(),
+	}
+	self.hash_table[ix] = append(self.hash_table[ix], node)
+	ok = true
+	return
+}
+
+func (self *Hashmap_t[Key_t, Value_t]) Find(key Key_t) (*Node_t[Key_t, Value_t], bool) {
+	id := self.hash_func(key)
+	ix := id % uint64(len(self.hash_table))
+	for _, node := range self.hash_table[ix] {
+		if self.equal(node.Key, key) {
+			return node, true
+		}
+	}
+	return nil, false
+}
