@@ -15,13 +15,13 @@ type Node_t[Key_t any, Value_t any] struct {
 }
 
 type Hashmap_t[Key_t any, Value_t any] struct {
-	equal       Equal[Key_t]
 	hash_func   H64[Key_t]
+	equal_func  Equal[Key_t]
 	hash_table  [][]*Node_t[Key_t, Value_t]
 	bucket_size int
 }
 
-func New[Key_t any, Value_t any](hash_func H64[Key_t], equal Equal[Key_t], table_size int, bucket_size int) (self *Hashmap_t[Key_t, Value_t]) {
+func New[Key_t any, Value_t any](hash_func H64[Key_t], equal_func Equal[Key_t], table_size int, bucket_size int) (self *Hashmap_t[Key_t, Value_t]) {
 	if table_size < 16 {
 		table_size = 16
 	}
@@ -29,8 +29,8 @@ func New[Key_t any, Value_t any](hash_func H64[Key_t], equal Equal[Key_t], table
 		bucket_size = 4
 	}
 	self = &Hashmap_t[Key_t, Value_t]{
-		equal:       equal,
 		hash_func:   hash_func,
+		equal_func:  equal_func,
 		hash_table:  make([][]*Node_t[Key_t, Value_t], table_size),
 		bucket_size: bucket_size,
 	}
@@ -52,7 +52,7 @@ func (self *Hashmap_t[Key_t, Value_t]) Insert(key Key_t, value Create[Value_t]) 
 	id := self.hash_func(key)
 	ix := id % uint64(len(self.hash_table))
 	for _, node = range self.hash_table[ix] {
-		if self.equal(node.Key, key) {
+		if self.equal_func(node.Key, key) {
 			return
 		}
 	}
@@ -72,10 +72,8 @@ func (self *Hashmap_t[Key_t, Value_t]) Insert(key Key_t, value Create[Value_t]) 
 }
 
 func (self *Hashmap_t[Key_t, Value_t]) Find(key Key_t) (*Node_t[Key_t, Value_t], bool) {
-	id := self.hash_func(key)
-	ix := id % uint64(len(self.hash_table))
-	for _, node := range self.hash_table[ix] {
-		if self.equal(node.Key, key) {
+	for _, node := range self.hash_table[self.hash_func(key)%uint64(len(self.hash_table))] {
+		if self.equal_func(node.Key, key) {
 			return node, true
 		}
 	}
