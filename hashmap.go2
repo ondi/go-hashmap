@@ -11,7 +11,6 @@ type Create[T any] func() T
 type Node_t[Key_t any, Value_t any] struct {
 	Key   Key_t
 	Value Value_t
-	id    uint64
 }
 
 type Hashmap_t[Key_t any, Value_t any] struct {
@@ -41,7 +40,7 @@ func (self *Hashmap_t[Key_t, Value_t]) rehash(new_len uint64) {
 	hash_table := make([][]*Node_t[Key_t, Value_t], new_len)
 	for _, bucket := range self.hash_table {
 		for _, node := range bucket {
-			ix := node.id % new_len
+			ix := self.hash_func(node.Key) % new_len
 			hash_table[ix] = append(hash_table[ix], node)
 		}
 	}
@@ -62,7 +61,6 @@ func (self *Hashmap_t[Key_t, Value_t]) Insert(key Key_t, value Create[Value_t]) 
 		ix = id % new_len
 	}
 	node = &Node_t[Key_t, Value_t]{
-		id:    id,
 		Key:   key,
 		Value: value(),
 	}
