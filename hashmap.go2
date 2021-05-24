@@ -82,11 +82,11 @@ func (self *Hashmap_t[Key_t, Value_t]) Delete(key Key_t) (node *Node_t[Key_t, Va
 	ix := self.hash_func(key) % uint64(len(self.hash_table))
 	for i, node = range self.hash_table[ix] {
 		if self.equal_func(node.Key, key) {
-			l := len(self.hash_table[ix])
-			self.hash_table[ix][l-1], self.hash_table[ix][i] = self.hash_table[ix][i], self.hash_table[ix][l-1]
-			self.hash_table[ix] = self.hash_table[ix][:l-1]
-			if l = len(self.hash_table); l > self.table_size && self.count*self.load_factor_num/self.load_factor_den < l {
-				self.rehash(uint64(l - 1))
+			temp := len(self.hash_table[ix])
+			self.hash_table[ix][temp-1], self.hash_table[ix][i] = self.hash_table[ix][i], self.hash_table[ix][temp-1]
+			self.hash_table[ix] = self.hash_table[ix][:temp-1]
+			if temp = len(self.hash_table); temp > self.table_size && self.count*self.load_factor_num/self.load_factor_den < temp {
+				self.rehash(uint64(temp - 1))
 			}
 			self.count--
 			ok = true
