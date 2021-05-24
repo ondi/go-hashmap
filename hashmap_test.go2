@@ -19,7 +19,7 @@ func equal(a int, b int) bool {
 }
 
 func Test01(t *testing.T) {
-	h := New[int, string](int_hash, equal, 0, 0)
+	h := New[int, string](int_hash, equal, 0, 0, 0)
 
 	node, ok := h.Insert(1, func() string { return "lalala" })
 	fmt.Printf("INSERT: %v %v\n", node, ok)
