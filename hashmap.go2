@@ -13,31 +13,37 @@ type Node_t[Key_t any, Value_t any] struct {
 	Value Value_t
 }
 
+type NodeList_t[Key_t any, Value_t any] []*Node_t[Key_t, Value_t]
+
 type Hashmap_t[Key_t any, Value_t any] struct {
 	hash_func   H64[Key_t]
 	equal_func  Equal[Key_t]
-	hash_table  [][]*Node_t[Key_t, Value_t]
-	bucket_size int
+	hash_table  []NodeList_t[Key_t, Value_t]
+	load_factor int
+	table_size  int
+	count       int
 }
 
-func New[Key_t any, Value_t any](hash_func H64[Key_t], equal_func Equal[Key_t], table_size int, bucket_size int) (self *Hashmap_t[Key_t, Value_t]) {
-	if table_size < 16 {
-		table_size = 16
+// load_factor = number_of_elements * 1000 / number_of_buckets
+func New[Key_t any, Value_t any](hash_func H64[Key_t], equal_func Equal[Key_t], table_size int, load_factor int) (self *Hashmap_t[Key_t, Value_t]) {
+	if table_size < 8 {
+		table_size = 8
 	}
-	if bucket_size < 4 {
-		bucket_size = 4
+	if load_factor <= 0 {
+		load_factor = 1000
 	}
 	self = &Hashmap_t[Key_t, Value_t]{
 		hash_func:   hash_func,
 		equal_func:  equal_func,
-		hash_table:  make([][]*Node_t[Key_t, Value_t], table_size),
-		bucket_size: bucket_size,
+		hash_table:  make([]NodeList_t[Key_t, Value_t], table_size),
+		table_size:  table_size,
+		load_factor: load_factor,
 	}
 	return
 }
 
-func (self *Hashmap_t[Key_t, Value_t]) rehash(new_len uint64) {
-	hash_table := make([][]*Node_t[Key_t, Value_t], new_len)
+func (self *Hashmap_t[Key_t, Value_t]) rehash(new_len uint64) uint64 {
+	hash_table := make([]NodeList_t[Key_t, Value_t], new_len)
 	for _, bucket := range self.hash_table {
 		for _, node := range bucket {
 			ix := self.hash_func(node.Key) % new_len
@@ -45,6 +51,7 @@ func (self *Hashmap_t[Key_t, Value_t]) rehash(new_len uint64) {
 		}
 	}
 	self.hash_table = hash_table
+	return new_len
 }
 
 func (self *Hashmap_t[Key_t, Value_t]) Insert(key Key_t, value Create[Value_t]) (node *Node_t[Key_t, Value_t], ok bool) {
@@ -55,17 +62,38 @@ func (self *Hashmap_t[Key_t, Value_t]) Insert(key Key_t, value Create[Value_t]) 
 			return
 		}
 	}
-	if len(self.hash_table[ix]) == self.bucket_size {
-		new_len := uint64(len(self.hash_table) * 4 / 3)
-		self.rehash(new_len)
-		ix = id % new_len
+	if self.count*1000/len(self.hash_table) > self.load_factor {
+		ix = id % self.rehash(uint64(len(self.hash_table)*4/3))
 	}
 	node = &Node_t[Key_t, Value_t]{
 		Key:   key,
 		Value: value(),
 	}
 	self.hash_table[ix] = append(self.hash_table[ix], node)
+	self.count++
 	ok = true
+	return
+}
+
+func (self *Hashmap_t[Key_t, Value_t]) Delete(key Key_t) (node *Node_t[Key_t, Value_t], ok bool) {
+	var i int
+	ix := self.hash_func(key) % uint64(len(self.hash_table))
+	for i, node = range self.hash_table[ix] {
+		if self.equal_func(node.Key, key) {
+			if l := len(self.hash_table[ix]); l == 1 {
+				self.hash_table[ix] = self.hash_table[ix][:]
+				if l = len(self.hash_table); l > self.table_size && self.count*1000/l < self.load_factor {
+					self.rehash(uint64(l - 1))
+				}
+			} else {
+				self.hash_table[ix][l-1], self.hash_table[ix][i] = self.hash_table[ix][i], self.hash_table[ix][l-1]
+				self.hash_table[ix] = self.hash_table[ix][:l-1]
+			}
+			self.count--
+			ok = true
+			return
+		}
+	}
 	return
 }
 
@@ -76,4 +104,12 @@ func (self *Hashmap_t[Key_t, Value_t]) Find(key Key_t) (*Node_t[Key_t, Value_t],
 		}
 	}
 	return nil, false
+}
+
+func (self *Hashmap_t[Key_t, Value_t]) Size() int {
+	return self.count
+}
+
+func (self *Hashmap_t[Key_t, Value_t]) Buckets() int {
+	return len(self.hash_table)
 }

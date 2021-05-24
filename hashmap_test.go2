@@ -30,9 +30,15 @@ func Test01(t *testing.T) {
 	node, ok = h.Insert(2, func() string { return "bububu" })
 	fmt.Printf("INSERT: %v %v\n", node, ok)
 
-	fmt.Printf("REHASH1: %v\n", len(h.hash_table))
-	h.rehash(16 * 4 / 3)
-	fmt.Printf("REHASH2: %v\n", len(h.hash_table))
+	node, ok = h.Delete(1)
+	fmt.Printf("DELETE: %v %v\n", node, ok)
+
+	node, ok = h.Insert(1, func() string { return "lalala" })
+	fmt.Printf("INSERT: %v %v\n", node, ok)
+
+	fmt.Printf("REHASH1: %v %v\n", h.Size(), h.Buckets())
+	h.rehash(8 * 4 / 3)
+	fmt.Printf("REHASH2: %v %v\n", h.Size(), h.Buckets())
 
 	node, ok = h.Find(1)
 	fmt.Printf("FIND: %v %v\n", node, ok)
