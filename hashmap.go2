@@ -13,12 +13,10 @@ type Node_t[Key_t any, Value_t any] struct {
 	Value Value_t
 }
 
-type NodeList_t[Key_t any, Value_t any] []*Node_t[Key_t, Value_t]
-
 type Hashmap_t[Key_t any, Value_t any] struct {
 	hash_func       H64[Key_t]
 	equal_func      Equal[Key_t]
-	hash_table      []NodeList_t[Key_t, Value_t]
+	hash_table      [][]*Node_t[Key_t, Value_t]
 	load_factor_num int
 	load_factor_den int
 	table_size      int
@@ -38,7 +36,7 @@ func New[Key_t any, Value_t any](hash_func H64[Key_t], equal_func Equal[Key_t], 
 	self = &Hashmap_t[Key_t, Value_t]{
 		hash_func:       hash_func,
 		equal_func:      equal_func,
-		hash_table:      make([]NodeList_t[Key_t, Value_t], table_size),
+		hash_table:      make([][]*Node_t[Key_t, Value_t], table_size),
 		table_size:      table_size,
 		load_factor_num: load_factor_num,
 		load_factor_den: load_factor_den,
@@ -47,7 +45,7 @@ func New[Key_t any, Value_t any](hash_func H64[Key_t], equal_func Equal[Key_t], 
 }
 
 func (self *Hashmap_t[Key_t, Value_t]) rehash(new_len uint64) uint64 {
-	hash_table := make([]NodeList_t[Key_t, Value_t], new_len)
+	hash_table := make([][]*Node_t[Key_t, Value_t], new_len)
 	for _, bucket := range self.hash_table {
 		for _, node := range bucket {
 			ix := self.hash_func(node.Key) % new_len
