@@ -64,8 +64,8 @@ func (self *Hashmap_t[Key_t, Value_t]) Insert(key Key_t, value Create[Value_t]) 
 			return
 		}
 	}
-	if self.count*self.load_factor_num/self.load_factor_den > len(self.hash_table) {
-		ix = id % self.rehash(uint64(len(self.hash_table)*4/3))
+	if temp := len(self.hash_table); self.count > temp*self.load_factor_num/self.load_factor_den {
+		ix = id % self.rehash(uint64(temp)*4/3)
 	}
 	node = &Node_t[Key_t, Value_t]{
 		Key:   key,
