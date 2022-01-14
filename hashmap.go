@@ -77,7 +77,7 @@ func (self *Hashmap_t[Key_t, Value_t]) Delete(key Key_t) (node *Node_t[Key_t, Va
 	bucket := self.hash_func(key) % uint64(len(self.hash_table))
 	for i, node = range self.hash_table[bucket] {
 		if node.Key == key {
-			// swap and resize
+			// swap, resize, rehash
 			temp := len(self.hash_table[bucket])
 			self.hash_table[bucket][temp-1], self.hash_table[bucket][i] = self.hash_table[bucket][i], self.hash_table[bucket][temp-1]
 			self.hash_table[bucket] = self.hash_table[bucket][:temp-1]
