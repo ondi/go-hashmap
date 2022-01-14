@@ -92,13 +92,14 @@ func (self *Hashmap_t[Key_t, Value_t]) Delete(key Key_t) (node *Node_t[Key_t, Va
 	return
 }
 
-func (self *Hashmap_t[Key_t, Value_t]) Find(key Key_t) (*Node_t[Key_t, Value_t], bool) {
-	for _, node := range self.hash_table[self.hash_func(key)%uint64(len(self.hash_table))] {
+func (self *Hashmap_t[Key_t, Value_t]) Find(key Key_t) (node *Node_t[Key_t, Value_t], ok bool) {
+	for _, node = range self.hash_table[self.hash_func(key)%uint64(len(self.hash_table))] {
 		if node.Key == key {
-			return node, true
+			ok = true
+			return
 		}
 	}
-	return nil, false
+	return
 }
 
 func (self *Hashmap_t[Key_t, Value_t]) Size() int {
