@@ -13,8 +13,8 @@ type Node_t[Key_t comparable, Value_t any] struct {
 }
 
 type Hashmap_t[Key_t comparable, Value_t any] struct {
-	hash_func       HashUint64[Key_t]
 	hash_table      [][]*Node_t[Key_t, Value_t]
+	hash_func       HashUint64[Key_t]
 	load_factor_num int
 	load_factor_den int
 	count           int
