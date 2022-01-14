@@ -14,12 +14,8 @@ func int_hash(a int) uint64 {
 	return uint64(a)
 }
 
-func equal(a int, b int) bool {
-	return a == b
-}
-
 func Test01(t *testing.T) {
-	h := New[int, string](int_hash, equal, 0, 0, 0)
+	h := New[int, string](int_hash, 0, 0, 0)
 
 	node, ok := h.Insert(1, func() string { return "lalala" })
 	fmt.Printf("INSERT: %v %v\n", node, ok)
