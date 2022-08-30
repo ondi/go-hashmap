@@ -4,8 +4,7 @@
 
 package hashmap
 
-type HashUint64[T comparable] func(T) uint64
-type CreateValue[T any] func() T
+type HashU64[T comparable] func(T) uint64
 
 type Node_t[Key_t comparable, Value_t any] struct {
 	Key   Key_t
@@ -14,13 +13,13 @@ type Node_t[Key_t comparable, Value_t any] struct {
 
 type Hashmap_t[Key_t comparable, Value_t any] struct {
 	hash_table      [][]*Node_t[Key_t, Value_t]
-	hash_func       HashUint64[Key_t]
+	hash_func       HashU64[Key_t]
 	load_factor_num int
 	load_factor_den int
 	count           int
 }
 
-func New[Key_t comparable, Value_t any](hash_func HashUint64[Key_t], table_size int, load_factor_num int, load_factor_den int) (self *Hashmap_t[Key_t, Value_t]) {
+func New[Key_t comparable, Value_t any](hash_func HashU64[Key_t], table_size int, load_factor_num int, load_factor_den int) (self *Hashmap_t[Key_t, Value_t]) {
 	if table_size < 8 {
 		table_size = 8
 	}
@@ -51,7 +50,7 @@ func (self *Hashmap_t[Key_t, Value_t]) rehash(new_len uint64) uint64 {
 	return new_len
 }
 
-func (self *Hashmap_t[Key_t, Value_t]) Insert(key Key_t, value CreateValue[Value_t]) (node *Node_t[Key_t, Value_t], ok bool) {
+func (self *Hashmap_t[Key_t, Value_t]) Insert(key Key_t, value func() Value_t) (node *Node_t[Key_t, Value_t], ok bool) {
 	id := self.hash_func(key)
 	bucket := id % uint64(len(self.hash_table))
 	for _, node = range self.hash_table[bucket] {
