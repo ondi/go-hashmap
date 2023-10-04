@@ -17,15 +17,15 @@ func int_hash(a int) uint64 {
 func Test01(t *testing.T) {
 	h := New[int, string](int_hash, 0, 0, 0)
 
-	node, ok := h.Insert(1, func() string { return "lalala" })
+	node, ok := h.Insert(1, func(p *string) { *p = "lalala" }, func(*string) {})
 	assert.Assert(t, ok == true)
 	assert.Assert(t, node.Key == 1)
 
-	node, ok = h.Insert(1, func() string { return "lalala" })
+	node, ok = h.Insert(1, func(p *string) { *p = "lalala" }, func(*string) {})
 	assert.Assert(t, ok == false)
 	assert.Assert(t, node.Key == 1)
 
-	node, ok = h.Insert(2, func() string { return "bububu" })
+	node, ok = h.Insert(2, func(p *string) { *p = "bububu" }, func(*string) {})
 	assert.Assert(t, ok == true)
 	assert.Assert(t, node.Key == 2)
 
@@ -33,7 +33,7 @@ func Test01(t *testing.T) {
 	assert.Assert(t, ok == true)
 	assert.Assert(t, node.Key == 1)
 
-	node, ok = h.Insert(1, func() string { return "lalala" })
+	node, ok = h.Insert(1, func(p *string) { *p = "lalala" }, func(*string) {})
 	assert.Assert(t, ok == true)
 	assert.Assert(t, node.Key == 1)
 

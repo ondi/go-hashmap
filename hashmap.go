@@ -50,25 +50,24 @@ func (self *Hashmap_t[Key_t, Value_t]) rehash(new_len uint64) uint64 {
 	return new_len
 }
 
-func (self *Hashmap_t[Key_t, Value_t]) Insert(key Key_t, value func() Value_t) (node *Node_t[Key_t, Value_t], ok bool) {
+func (self *Hashmap_t[Key_t, Value_t]) Insert(key Key_t, value_init func(*Value_t), value_update func(*Value_t)) (node *Node_t[Key_t, Value_t], ok bool) {
 	id := self.hash_func(key)
 	bucket := id % uint64(len(self.hash_table))
 	for _, node = range self.hash_table[bucket] {
 		if node.Key == key {
+			value_update(&node.Value)
 			return
 		}
 	}
+	// rehash?
 	if buckets := len(self.hash_table); self.count > buckets*self.load_factor_num/self.load_factor_den {
 		bucket = id % self.rehash(uint64(buckets)*4/3)
 	}
-	node = &Node_t[Key_t, Value_t]{
-		Key:   key,
-		Value: value(),
-	}
+	node = &Node_t[Key_t, Value_t]{Key: key}
+	value_init(&node.Value)
 	self.hash_table[bucket] = append(self.hash_table[bucket], node)
 	self.count++
-	ok = true
-	return
+	return node, true
 }
 
 func (self *Hashmap_t[Key_t, Value_t]) Delete(key Key_t) (node *Node_t[Key_t, Value_t], ok bool) {
@@ -76,7 +75,7 @@ func (self *Hashmap_t[Key_t, Value_t]) Delete(key Key_t) (node *Node_t[Key_t, Va
 	bucket := self.hash_func(key) % uint64(len(self.hash_table))
 	for i, node = range self.hash_table[bucket] {
 		if node.Key == key {
-			// swap, resize, rehash
+			// remove (swap, resize), rehash
 			temp := len(self.hash_table[bucket])
 			self.hash_table[bucket][temp-1], self.hash_table[bucket][i] = self.hash_table[bucket][i], self.hash_table[bucket][temp-1]
 			self.hash_table[bucket] = self.hash_table[bucket][:temp-1]
@@ -84,8 +83,7 @@ func (self *Hashmap_t[Key_t, Value_t]) Delete(key Key_t) (node *Node_t[Key_t, Va
 			if temp = len(self.hash_table); temp > self.count*self.load_factor_num/self.load_factor_den {
 				self.rehash(uint64(temp - 1))
 			}
-			ok = true
-			return
+			return node, true
 		}
 	}
 	return
@@ -94,8 +92,7 @@ func (self *Hashmap_t[Key_t, Value_t]) Delete(key Key_t) (node *Node_t[Key_t, Va
 func (self *Hashmap_t[Key_t, Value_t]) Find(key Key_t) (node *Node_t[Key_t, Value_t], ok bool) {
 	for _, node = range self.hash_table[self.hash_func(key)%uint64(len(self.hash_table))] {
 		if node.Key == key {
-			ok = true
-			return
+			return node, true
 		}
 	}
 	return
